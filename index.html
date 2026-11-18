@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zotebook — notes in plain Markdown files</title>
+<meta name="description" content="Zotebook is a fast, open-source desktop editor for folders of Markdown files. No database, no import, no lock-in. Banners, journal calendar, wiki links, encrypted sync to storage you own, and an MCP server for your AI tools.">
+<meta name="theme-color" content="#07080a">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zotebook.klectr.dev/">
+<meta property="og:title" content="zotebook — notes in plain Markdown files">
+<meta property="og:description" content="A fast, open-source desktop editor for folders of Markdown files. No database, no import, no lock-in.">
+<meta property="og:image" content="https://zotebook.klectr.dev/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="zotebook — notes in plain Markdown files">
+<meta name="twitter:description" content="A fast, open-source desktop editor for folders of Markdown files. No database, no import, no lock-in.">
+<meta name="twitter:image" content="https://zotebook.klectr.dev/img/og-image.png">
+<link rel="icon" href="img/icon-ink.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fragment+Mono&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1e232c;
+    --muted:#7d8594;
+    --faint:#adb2b8;
+    --surface:#f4f3f6;
+    --line:rgba(0,0,0,.09);
+    --accent:#7a4fba;
+    --accent-deep:#5f3a99;
+    --accent-soft:#b597e8;
+    --deep-1:#1a1030;
+    --deep-2:#3a2466;
+    --hero-sub:#bdb3d6;
+    --radius:9px;
+    --shadow-raised:0 1px 3px rgba(0,0,0,.08);
+    --shadow-overlay:0 0 1px 0 rgba(0,0,0,.2),0 0 4px 0 rgba(0,0,0,.02),0 24px 72px rgba(0,0,0,.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"DM Sans",system-ui,sans-serif;color:var(--ink);background:#fff;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Montserrat",sans-serif;line-height:1.2}
+  code,pre,.mono{font-family:"Fragment Mono",monospace}
+  a{color:var(--accent);text-decoration:none}
+  img{display:block;max-width:100%;height:auto}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  /* ---------- floating nav ---------- */
+  .nav{
+    position:fixed;top:16px;left:0;right:0;z-index:50;
+    max-width:1032px;margin:0 auto;padding:8px 8px 8px 16px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    border-radius:14px;border:1px solid transparent;transition:background .25s ease,border-color .25s ease,backdrop-filter .25s ease;
+  }
+  .nav.stuck{background:rgba(16,14,22,.72);border-color:rgba(255,255,255,.10);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .brand{display:flex;align-items:center;gap:10px;color:#fff}
+  .brand img{width:30px;height:30px}
+  .brand .name{font-family:"Montserrat",sans-serif;font-weight:700;font-size:21px;letter-spacing:-.2px}
+  .brand .badge{
+    font-family:"Fragment Mono",monospace;font-size:11px;letter-spacing:1px;
+    border:1px solid rgba(255,255,255,.5);border-radius:4px;padding:2px 6px;color:#fff;
+  }
+  .nav-links{display:flex;gap:10px;align-items:center}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:"DM Sans",sans-serif;font-weight:500;font-size:15px;
+    padding:8px 16px;border-radius:var(--radius);border:1px solid transparent;
+    transition:opacity .2s ease,background .2s ease;cursor:pointer;white-space:nowrap;
+  }
+  .btn:hover{opacity:.92}
+  .btn svg{width:16px;height:16px;flex:none}
+  .btn-white{background:#fff;color:#16121f}
+  .btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+  .btn-ghost:hover{background:rgba(255,255,255,.08)}
+  .btn-text{color:#d8d2e6;padding:8px 10px}
+  .btn-text:hover{color:#fff}
+  .btn-pill{border-radius:100px;padding:14px 30px;font-size:16px}
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding-top:62px;
+    background:
+      radial-gradient(780px 500px at 50% -40px, rgba(122,79,186,.42), rgba(122,79,186,0) 66%),
+      radial-gradient(600px 460px at 90% 34%, rgba(122,79,186,.18), rgba(122,79,186,0) 65%),
+      radial-gradient(520px 420px at 6% 52%, rgba(65,118,230,.12), rgba(65,118,230,0) 65%),
+      #07080a;
+    color:#fff;overflow-x:clip;position:relative;z-index:1;
+  }
+  .hero-inner{text-align:center;padding:84px 0 0;display:flex;flex-direction:column;align-items:center}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:"Fragment Mono",monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--hero-sub);border:1px solid rgba(255,255,255,.14);border-radius:100px;padding:6px 14px;
+    background:rgba(255,255,255,.04);
+  }
+  .hero h1{font-size:58px;font-weight:700;letter-spacing:-.8px;margin:26px 0 6px;max-width:860px}
+  .hero h1 .line2{display:block;margin-top:6px;color:#e6dcf8}
+  .hero .sub{color:var(--hero-sub);font-size:17px;line-height:1.65;max-width:620px;margin:22px auto 0}
+  .hero-ctas{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
+  .hero-note{margin-top:16px;color:var(--hero-sub);font-size:13px}
+  .hero-note .mono{color:#e6dcf8}
+
+  .window{
+    max-width:980px;margin:60px auto -150px;position:relative;z-index:2;text-align:left;
+    background:#141218;border:1px solid rgba(255,255,255,.14);border-radius:14px;
+    box-shadow:var(--shadow-overlay);overflow:hidden;
+  }
+  .window-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+  .window-title{margin-left:10px;color:#8e879c;font-size:13px;font-family:"Fragment Mono",monospace}
+  .window-title b{color:#e6dcf8;font-weight:400}
+
+  /* ---------- light sections ---------- */
+  section{padding:88px 0}
+  .first-light{padding-top:226px;padding-bottom:0}
+  .kicker{font-family:"Fragment Mono",monospace;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .sec-title{font-size:38px;font-weight:700;letter-spacing:-.4px;max-width:680px}
+  .sec-sub{color:var(--muted);font-size:16px;margin-top:14px;max-width:640px;line-height:1.65}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .stat{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-raised)}
+  .stat .label{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:1.5px}
+  .stat .value{font-family:"Montserrat",sans-serif;font-size:30px;font-weight:700;margin-top:8px}
+  .stat .hint{color:var(--muted);margin-top:4px}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-raised)}
+  .features{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+  .feature h3{font-size:17px;margin-bottom:8px}
+  .feature p{color:var(--muted);line-height:1.6}
+  .feature .mono{color:var(--ink);font-size:12.5px}
+  .tag{
+    display:inline-block;font-family:"Fragment Mono",monospace;font-size:11px;letter-spacing:1px;
+    color:var(--accent-deep);background:rgba(122,79,186,.10);border-radius:100px;padding:3px 10px;margin-bottom:12px;text-transform:uppercase;
+  }
+
+  /* showcase rows: text beside a screenshot */
+  .show{display:grid;grid-template-columns:5fr 7fr;gap:48px;align-items:center;margin-top:56px}
+  .show.flip{grid-template-columns:7fr 5fr}
+  .show.flip .show-text{order:2}
+  .show-text h3{font-size:24px;letter-spacing:-.2px;margin-bottom:12px}
+  .show-text p{color:var(--muted);font-size:15.5px;line-height:1.7}
+  .show-text ul{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:10px}
+  .show-text li{display:flex;gap:10px;color:var(--ink);line-height:1.55}
+  .show-text li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:8px}
+  .shot{border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.05),0 18px 48px rgba(30,20,60,.14);background:#f7f4ee}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;margin-top:40px}
+  .codecard{
+    background:#0d0b12;border-radius:12px;padding:20px 24px;color:#d6cfe6;
+    font-family:"Fragment Mono",monospace;font-size:13.5px;line-height:1.9;overflow-x:auto;white-space:pre;box-shadow:var(--shadow-raised);
+  }
+  .codecard .dim{color:#6f6882}
+  .codecard .hl{color:var(--accent-soft)}
+  .codecard .str{color:#7fd6a0}
+  .points{display:flex;flex-direction:column;gap:18px}
+  .point{display:flex;gap:16px;align-items:flex-start}
+  .chip{font-family:"Fragment Mono",monospace;font-size:13px;font-weight:700;border-radius:8px;padding:8px 12px;min-width:84px;text-align:center;flex:none}
+  .chip.a{background:#eee6fb;color:var(--accent-deep)}
+  .chip.b{background:#e7f6ec;color:#267d46}
+  .chip.c{background:#e3ecfd;color:#3157b8}
+  .point h3{font-size:16px;margin-bottom:4px}
+  .point p{color:var(--muted);line-height:1.6}
+
+  .cta-band{
+    background:radial-gradient(600px 300px at 50% 0%, rgba(181,151,232,.28), rgba(181,151,232,0) 70%),linear-gradient(178deg,var(--deep-2),var(--deep-1));
+    border-radius:16px;color:#fff;text-align:center;padding:56px 32px;
+  }
+  .cta-band h2{font-size:34px}
+  .cta-band > p{color:var(--hero-sub);margin:14px auto 28px;max-width:540px;font-size:16px;line-height:1.6}
+  .platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:760px;margin:0 auto 28px;text-align:left}
+  .platform{display:block;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:16px;color:#fff;transition:background .2s ease,border-color .2s ease}
+  .platform:hover{background:rgba(0,0,0,.34);border-color:rgba(255,255,255,.24)}
+  .platform b{display:block;font-family:"Montserrat",sans-serif;font-size:16px}
+  .platform span{display:block;color:var(--hero-sub);font-size:13px;margin-top:4px}
+  .platform .mono{color:#e6dcf8;font-size:11.5px;margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cta-band .small{color:var(--hero-sub);font-size:13px;margin-top:20px}
+
+  footer{border-top:1px solid var(--line);padding:36px 0 44px;color:var(--muted)}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .foot .brand{color:var(--ink)}
+  .foot .brand .name{font-size:18px}
+  .foot-links{display:flex;gap:24px;flex-wrap:wrap}
+  .foot-links a{color:var(--muted)}
+  .foot-links a:hover{color:var(--ink)}
+
+  /* motion */
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  @keyframes rise-far{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+  .enter{opacity:0;animation:rise .7s ease-out forwards}
+  .enter.d1{animation-delay:.05s}.enter.d2{animation-delay:.15s}.enter.d3{animation-delay:.28s}.enter.d4{animation-delay:.42s}
+  .preview{opacity:0;animation:rise-far .9s ease-out .5s forwards}
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease-out,transform .6s ease-out}
+  .reveal.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .enter,.preview{animation:none;opacity:1}
+    .reveal{transition:none;opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+
+  @media (max-width:900px){
+    .hero h1{font-size:44px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .features{grid-template-columns:1fr 1fr}
+    .show,.show.flip,.split{grid-template-columns:1fr;gap:24px}
+    .show.flip .show-text{order:0}
+    .window{margin-bottom:-110px}
+    .first-light{padding-top:176px}
+  }
+  @media (max-width:640px){
+    .wrap{padding:0 16px}
+    .nav{top:10px;left:10px;right:10px}
+    .nav-links .hide-sm{display:none}
+    .hero-inner{padding-top:64px}
+    .hero h1{font-size:35px}
+    .eyebrow{font-size:10.5px;letter-spacing:2px}
+    .sec-title{font-size:29px}
+    .features,.stats,.platforms{grid-template-columns:1fr}
+    section{padding:64px 0}
+    .window{margin:40px auto -60px;border-radius:10px}
+    .window-bar{padding:8px 12px}
+    .dot{width:9px;height:9px}
+    .first-light{padding-top:108px}
+    .cta-band{padding:44px 18px}
+    .cta-band h2{font-size:28px}
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <a class="brand" href="#top">
+    <img src="img/mark-on-ink.svg" alt="">
+    <span class="name">zotebook</span>
+    <span class="badge">OSS</span>
+  </a>
+  <div class="nav-links">
+    <a class="btn btn-text hide-sm" href="#features">Features</a>
+    <a class="btn btn-text hide-sm" href="#sync">Sync</a>
+    <a class="btn btn-ghost hide-sm" href="https://github.com/Klectr/zotebook">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+    <a class="btn btn-white" href="#download">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12.5h10"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="hero-inner">
+      <div class="eyebrow enter d1">✦ Preview · Open source · Desktop</div>
+      <h1 class="enter d2">Your notes are files.<span class="line2">Your editor should know it.</span></h1>
+      <p class="sub enter d3">Zotebook opens a folder and edits the Markdown in it. No database, no import step, no lock-in. Every note is a <span class="mono">.md</span> file on your disk that any other app can open, today and in twenty years.</p>
+      <div class="hero-ctas enter d4">
+        <a class="btn btn-white btn-pill" href="#download">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12.5h10"/></svg>
+          Download Zotebook
+        </a>
+        <a class="btn btn-ghost btn-pill" href="https://github.com/Klectr/zotebook">View on GitHub</a>
+      </div>
+      <p class="hero-note enter d4">macOS · Linux · Windows · <span class="mono">free and MIT licensed</span></p>
+    </div>
+
+    <div class="window preview">
+      <div class="window-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="window-title">zotebook — <b>Life Wiki</b></span>
+      </div>
+      <img src="img/preview-dark.webp" width="1920" height="1200" alt="Zotebook in the dark theme: a note with a banner image and a compass icon in preview mode, the file tree on the left, and the journal calendar and outline on the right.">
+    </div>
+  </div>
+</header>
+
+<section class="first-light">
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><div class="label">File format</div><div class="value">.md</div><div class="hint">plain Markdown, nothing else</div></div>
+      <div class="stat"><div class="label">Database</div><div class="value">0</div><div class="hint">the folder is the source of truth</div></div>
+      <div class="stat"><div class="label">Themes</div><div class="value">14</div><div class="hint">plus any accent colour you like</div></div>
+      <div class="stat"><div class="label">Price</div><div class="value">$0</div><div class="hint">free and open source</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="kicker reveal">What's new</div>
+    <h2 class="sec-title reveal">Pages with a face, and a journal that keeps itself</h2>
+    <p class="sec-sub reveal">Plain files don't have to look plain. Zotebook adds the touches you'd expect from a notes app, and still keeps every one of them in the Markdown.</p>
+
+    <div class="show reveal">
+      <div class="show-text">
+        <h3>Banners and icons</h3>
+        <p>Hover over a note's name and choose <b>Add icon</b> or <b>Add banner</b>. The icon is an emoji at the start of the file name, so the file tree shows it too. The banner is an image copied into <span class="mono">attachments/</span> and kept in the note's front matter.</p>
+        <ul>
+          <li>Change or remove a banner by hovering over it</li>
+          <li>"Add banner…" and "Remove banner" in the command palette</li>
+          <li>Folders take an emoji icon the same way</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/editor-light.webp" width="1920" height="1200" loading="lazy" alt="Source mode in the light theme. The note's front matter holds the banner path, and the compass icon sits on the banner's edge."></div>
+    </div>
+
+    <div class="show flip reveal">
+      <div class="show-text">
+        <h3>A journal calendar</h3>
+        <p>The calendar above the outline puts a dot under every day that has a note, and a ring around today. Click a day to open its entry, or to start one: it lands in <span class="mono">Journal/2026-11-17.md</span>, ready to type.</p>
+        <ul>
+          <li>Step through months, then jump back with <b>Today</b></li>
+          <li>Entries are ordinary notes with a <span class="mono">#journal</span> tag</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/journal.webp" width="1920" height="1200" loading="lazy" alt="A journal entry opened from the calendar. Days with notes have dots under them, and today has a ring."></div>
+    </div>
+
+    <div class="show reveal">
+      <div class="show-text">
+        <h3>Everything from the keyboard</h3>
+        <p><span class="mono">⌘O</span> opens any note by a fuzzy name. <span class="mono">⌘P</span> runs any command. <span class="mono">⌘⇧F</span> searches every note, and tags like <span class="mono">#idea</span> get their own list.</p>
+        <ul>
+          <li>Typing a name that doesn't exist creates the note</li>
+          <li><span class="mono">Drafts/Idea</span> makes it inside a folder</li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/quick-switcher.webp" width="1920" height="1200" loading="lazy" alt="The quick switcher with the query “road” matching the Roadmap note."></div>
+    </div>
+
+    <div class="features">
+      <div class="card feature reveal"><span class="tag">Write</span><h3>Source and preview</h3><p>Source mode highlights Markdown as you type, in a monospaced font. <span class="mono">⌘E</span> flips to a preview that reads like a printed page, and preview stays on as you move between notes.</p></div>
+      <div class="card feature reveal"><span class="tag">Link</span><h3>Wiki links and backlinks</h3><p>Write <span class="mono">[[Note name]]</span> and follow it. A link to a missing note makes the note, renaming a note rewrites the links to it, and the outline shows what links here.</p></div>
+      <div class="card feature reveal"><span class="tag">Format</span><h3>A toolbar that stays put</h3><p>Bold, headings, lists, tasks, quotes, code and images from a floating toolbar. Rich text you paste from the web turns into clean Markdown.</p></div>
+      <div class="card feature reveal"><span class="tag">Organize</span><h3>Folders with their own notes</h3><p>A note named after its folder, like <span class="mono">Projects/Projects.md</span>, is the folder's page. Click the folder's name to open it; the chevron opens the folder.</p></div>
+      <div class="card feature reveal"><span class="tag">Privacy</span><h3>Locked notes</h3><p>Lock any note with its own password. It's encrypted with AES-256-GCM on disk and in sync, and shows nothing until you unlock it.</p></div>
+      <div class="card feature reveal"><span class="tag">Focus</span><h3>Focus mode</h3><p><span class="mono">⌘.</span> hides everything but the text, dims the other paragraphs, and keeps the line you're typing near the middle of the screen.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="sync" style="padding-top:24px">
+  <div class="wrap">
+    <div class="kicker reveal">Sync &amp; AI</div>
+    <h2 class="sec-title reveal">Sync through storage you own. Share with the tools you choose.</h2>
+    <p class="sec-sub reveal">There's no Zotebook cloud. Your notes go to a bucket or a Git repository that you control, in an open, documented format, encrypted if you want.</p>
+    <div class="split">
+      <div class="points reveal">
+        <div class="point"><span class="chip a">bucket</span><div><h3>Any S3-compatible storage</h3><p>Amazon S3, Cloudflare R2, Backblaze B2, Hetzner, Azure, Google Cloud, MinIO and more. When two devices edit the same note, both versions are kept.</p></div></div>
+        <div class="point"><span class="chip b">git</span><div><h3>Or a GitHub repository</h3><p>A notes folder that's a Git repo commits, rebases and pushes with the credentials you already have.</p></div></div>
+        <div class="point"><span class="chip c">mcp</span><div><h3>A built-in MCP server</h3><p>Claude Desktop, Cursor and other MCP clients can read and search your notes. Read-only by default, with a switch for every tool and folders you can hide.</p></div></div>
+      </div>
+      <div class="codecard reveal"><span class="dim">// a note, as it sits on your disk</span>
+<span class="dim">// ~/Notes/🧭 Life Wiki.md</span>
+<span class="hl">---</span>
+<span class="hl">banner:</span> <span class="str">attachments/dusk.png</span>
+<span class="hl">---</span>
+<span class="hl">#</span> Life Wiki
+
+<span class="hl">&gt;</span> The better we get at getting better,
+<span class="hl">&gt;</span> the faster we get better.
+
+<span class="hl">##</span> Writing
+<span class="hl">-</span> [[<span class="str">Reading list</span>]]
+<span class="hl">-</span> Drafts and essays</div>
+    </div>
+  </div>
+</section>
+
+<section id="download" style="padding-top:24px">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>Open a folder. Start writing.</h2>
+      <p>Download Zotebook for your computer. It updates itself when a new release is out.</p>
+      <div class="platforms">
+        <a class="platform" href="https://github.com/Klectr/zotebook/releases/latest"><b>macOS</b><span>Apple silicon</span><div class="mono">zotebook-…-macos-arm64.zip</div></a>
+        <a class="platform" href="https://github.com/Klectr/zotebook/releases/latest"><b>Linux</b><span>x86-64</span><div class="mono">zotebook-…-linux-x86_64.tar.gz</div></a>
+        <a class="platform" href="https://github.com/Klectr/zotebook/releases/latest"><b>Windows</b><span>x86-64</span><div class="mono">zotebook-…-windows-x86_64.zip</div></a>
+      </div>
+      <a class="btn btn-white btn-pill" href="https://github.com/Klectr/zotebook/releases/latest">All downloads</a>
+      <p class="small">Zotebook is in preview. The macOS app isn't notarized yet: right-click it and choose <b>Open</b> the first time.<br>Coming from Quire? Zotebook moves your settings over on first launch.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="#top">
+      <img src="img/mark.svg" alt="">
+      <span class="name">zotebook</span>
+    </a>
+    <div class="foot-links">
+      <a href="https://github.com/Klectr/zotebook">GitHub</a>
+      <a href="https://github.com/Klectr/zotebook#readme">Readme</a>
+      <a href="https://github.com/Klectr/zotebook/blob/main/SYNC.md">Sync format</a>
+      <a href="https://zlab.klectr.dev">Zlab</a>
+      <a href="https://zlorb.klectr.dev">Zlorb</a>
+    </div>
+    <div>© 2026 Triston Armstrong · A Klectr project · Built with <a href="https://github.com/anomalyco/rune" style="color:var(--muted);text-decoration:underline">Rune</a></div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('stuck', window.scrollY > 24);
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+</body>
+</html>
